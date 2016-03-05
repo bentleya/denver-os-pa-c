@@ -293,9 +293,10 @@ static alloc_status _mem_resize_pool_store()
 
 static alloc_status _mem_resize_node_heap(pool_mgr_pt pool_mgr)
 {
-    if (pool_mgr->used_nodes / pool_mgr->total_nodes > MEM_NODE_HEAP_FILL_FACTOR) {
+    if (pool_mgr->used_nodes / pool_mgr->total_nodes > MEM_NODE_HEAP_FILL_FACTOR)
+    {
         pool_mgr->node_heap = realloc(pool_mgr->node_heap, sizeof(pool_mgr->node_heap) * MEM_NODE_HEAP_EXPAND_FACTOR);
-        pool_mgr->total_nodes = sizeof(pool_mgr->node_heap) / sizeof(_node);
+        pool_mgr->total_nodes = pool_mgr->total_nodes * MEM_NODE_HEAP_EXPAND_FACTOR;
 
         return ALLOC_OK;
     }
@@ -342,7 +343,6 @@ static alloc_status _mem_add_to_gap_ix(pool_mgr_pt pool_mgr, size_t size, node_p
 
 static alloc_status _mem_remove_from_gap_ix(pool_mgr_pt pool_mgr, size_t size, node_pt node)
 {
-    // find the position of the node in the gap index
     int i = 0;
     while (pool_mgr->gap_ix[i].node != node)
         ++i;
@@ -353,7 +353,7 @@ static alloc_status _mem_remove_from_gap_ix(pool_mgr_pt pool_mgr, size_t size, n
     return ALLOC_OK;
 }
 
-// note: only called by _mem_add_to_gap_ix, which appends a single entry
+
 static alloc_status _mem_sort_gap_ix(pool_mgr_pt pool_mgr)
 {
     int i = pool_mgr->pool.num_gaps - 1;
