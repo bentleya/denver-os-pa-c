@@ -284,25 +284,23 @@ static alloc_status _mem_add_to_gap_ix(pool_mgr_pt pool_mgr,
     return ALLOC_FAIL;
 }
 
-static alloc_status _mem_remove_from_gap_ix(pool_mgr_pt pool_mgr,
-                                            size_t size,
-                                            node_pt node) {
-    // find the position of the node in the gap index
-    // loop from there to the end of the array:
-    //    pull the entries (i.e. copy over) one position up
-    //    this effectively deletes the chosen node
-    // update metadata (num_gaps)
-    // zero out the element at position num_gaps!
+static alloc_status _mem_remove_from_gap_ix(pool_mgr_pt pool_mgr, size_t size, node_pt node)
+{
+    int i = 0;
+    while (pool_mgr->gap_ix[i].node != node)
+        ++i;
 
-    return ALLOC_FAIL;
+    pool_mgr->gap_ix[i].size = 0;
+    pool_mgr->gap_ix[i].node = NULL;
+
+    return ALLOC_OK;
 }
 
 // note: only called by _mem_add_to_gap_ix, which appends a single entry
-static alloc_status _mem_sort_gap_ix(pool_mgr_pt pool_mgr) {
-    // the new entry is at the end, so "bubble it up"
+static alloc_status _mem_sort_gap_ix(pool_mgr_pt pool_mgr)
+{
     int i = pool_mgr->pool.num_gaps - 1;
 
-    // loop from num_gaps - 1 until but not including 0:
     while (pool_mgr->gap_ix[i].size < pool_mgr->gap_ix[i+1].size && i > 0)
     {
         gap_t temp = pool_mgr->gap_ix[i];
