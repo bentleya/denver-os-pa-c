@@ -300,13 +300,19 @@ static alloc_status _mem_remove_from_gap_ix(pool_mgr_pt pool_mgr,
 // note: only called by _mem_add_to_gap_ix, which appends a single entry
 static alloc_status _mem_sort_gap_ix(pool_mgr_pt pool_mgr) {
     // the new entry is at the end, so "bubble it up"
-    // loop from num_gaps - 1 until but not including 0:
-    //    if the size of the current entry is less than the previous (u - 1)
-    //    or if the sizes are the same but the current entry points to a
-    //    node with a lower address of pool allocation address (mem)
-    //       swap them (by copying) (remember to use a temporary variable)
+    int i = pool_mgr->pool.num_gaps - 1;
 
-    return ALLOC_FAIL;
+    // loop from num_gaps - 1 until but not including 0:
+    while (pool_mgr->gap_ix[i].size < pool_mgr->gap_ix[i+1].size && i > 0)
+    {
+        gap_t temp = pool_mgr->gap_ix[i];
+        pool_mgr->gap_ix[i] = pool_mgr->gap_ix[i+1];
+        pool_mgr->gap_ix[i+1] = temp;
+
+        --i;
+    }
+
+    return ALLOC_OK;
 }
 
 
