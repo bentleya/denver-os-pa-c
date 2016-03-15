@@ -271,17 +271,34 @@ static alloc_status _mem_resize_gap_ix(pool_mgr_pt pool_mgr) {
     return ALLOC_FAIL;
 }
 
-static alloc_status _mem_add_to_gap_ix(pool_mgr_pt pool_mgr,
-                                       size_t size,
-                                       node_pt node) {
-
+static alloc_status _mem_add_to_gap_ix(pool_mgr_pt pool_mgr, size_t size, node_pt node)
+{
     // expand the gap index, if necessary (call the function)
+    _mem_resize_gap_ix(pool_mgr);
+
     // add the entry at the end
+    int i = 0;
+    while (pool_mgr->gap_ix[i].node != NULL)
+        ++i;
+
+    pool_mgr->gap_ix[i].node = node;
+    pool_mgr->gap_ix[i].size = size;
+
     // update metadata (num_gaps)
+    ++pool_mgr->pool.num_gaps;
+
     // sort the gap index (call the function)
     // check success
+    if (pool_mgr->gap_ix[i].node != NULL)
+    {
+        _mem_sort_gap_ix(pool_mgr);
+        return ALLOC_OK;
+    }
 
-    return ALLOC_FAIL;
+    else
+        return ALLOC_FAIL;
+
+    return ALLOC_OK;
 }
 
 static alloc_status _mem_remove_from_gap_ix(pool_mgr_pt pool_mgr, size_t size, node_pt node)
