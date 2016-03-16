@@ -94,15 +94,30 @@ static alloc_status _mem_sort_gap_ix(pool_mgr_pt pool_mgr);
 /* Definitions of user-facing functions */
 /*                                      */
 /****************************************/
-alloc_status mem_init() {
+alloc_status mem_init()
+{
     // ensure that it's called only once until mem_free
     // allocate the pool store with initial capacity
     // note: holds pointers only, other functions to allocate/deallocate
+    if (pool_store == NULL)
+    {
+        pool_store = (pool_mgr_pt*) calloc(MEM_POOL_STORE_INIT_CAPACITY, sizeof(pool_mgr_pt));
+        pool_store_capacity = MEM_POOL_STORE_INIT_CAPACITY;
+        pool_store_size = 0;
+    }
 
-    return ALLOC_FAIL;
+    else
+        return ALLOC_CALLED_AGAIN;
+
+    if (pool_store != NULL)
+        return ALLOC_OK;
+
+    else
+        return ALLOC_FAIL;
 }
 
-alloc_status mem_free() {
+alloc_status mem_free()
+{
     // ensure that it's called only once for each mem_init
     // make sure all pool managers have been deallocated
     // can free the pool store array
@@ -319,8 +334,6 @@ static alloc_status _mem_add_to_gap_ix(pool_mgr_pt pool_mgr, size_t size, node_p
 
     else
         return ALLOC_FAIL;
-
-    return ALLOC_OK;
 }
 
 static alloc_status _mem_remove_from_gap_ix(pool_mgr_pt pool_mgr, size_t size, node_pt node)
