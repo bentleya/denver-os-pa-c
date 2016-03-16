@@ -138,40 +138,127 @@ alloc_status mem_free()
         return ALLOC_NOT_FREED;
 }
 
-pool_pt mem_pool_open(size_t size, alloc_policy policy) {
+pool_pt mem_pool_open(size_t size, alloc_policy policy)
+{
     // make sure there the pool store is allocated
+    if(pool_store == NULL)
+        return NULL;
+
     // expand the pool store, if necessary
+    if (((float) pool_store_size / pool_store_capacity) > MEM_POOL_STORE_FILL_FACTOR)
+    if(_mem_resize_pool_store() != ALLOC_OK)
+        return NULL;
+
     // allocate a new mem pool mgr
+    pool_mgr_pt pool_mgr = (pool_mgr_pt) malloc(sizeof(pool_mgr_t));
+
     // check success, on error return null
+    if (pool_mgr == NULL)
+        return NULL;
+
     // allocate a new memory pool
+    pool_mgr->pool.mem = (char*) malloc(size);
+
     // check success, on error deallocate mgr and return null
+    if (pool_mgr->pool.mem == NULL)
+    {
+        free(pool_mgr);
+        return NULL;
+    }
+
     // allocate a new node heap
+    pool_mgr->node_heap = (node_pt) calloc (MEM_NODE_HEAP_INIT_CAPACITY ,sizeof(node_t));
+    pool_mgr->total_nodes = MEM_NODE_HEAP_INIT_CAPACITY;
+
     // check success, on error deallocate mgr/pool and return null
+    if (pool_mgr->node_heap == NULL)
+    {
+        free(pool_mgr);
+        return NULL;
+    }
+
     // allocate a new gap index
+    pool_mgr->gap_ix = (gap_pt) calloc (MEM_GAP_IX_INIT_CAPACITY, sizeof(gap_t));
+    pool_mgr->gap_ix_capacity = MEM_GAP_IX_INIT_CAPACITY;
+
     // check success, on error deallocate mgr/pool/heap and return null
+    if (pool_mgr->gap_ix == NULL)
+    {
+        free(pool_mgr->node_heap);
+        free(&pool_mgr[0].pool);
+        free(pool_mgr);
+        return NULL;
+
+    }
     // assign all the pointers and update meta data:
     //   initialize top node of node heap
-    //   initialize top node of gap index
-    //   initialize pool mgr
-    //   link pool mgr to pool store
-    // return the address of the mgr, cast to (pool_pt)
+    pool_mgr->node_heap[0].next = NULL;
+    pool_mgr->node_heap[0].prev = NULL;
+    pool_mgr->node_heap[0].allocated = 0;
+    pool_mgr->node_heap[0].used = 0;
+    pool_mgr->node_heap[0].alloc_record.mem = pool_mgr->pool.mem;
+    pool_mgr->node_heap[0].alloc_record.size = size;
 
-    return NULL;
+    //   initialize top node of gap index
+    pool_mgr->gap_ix[0].size = size;
+    pool_mgr->gap_ix[0].node = pool_mgr->node_heap;
+
+    //   initialize pool mgr
+    pool_mgr->pool.alloc_size = 0;
+    pool_mgr->pool.num_allocs = 0;
+    pool_mgr->pool.total_size = size;
+    pool_mgr->pool.num_gaps = 1;
+    pool_mgr->pool.policy = policy;
+    pool_mgr->used_nodes = 1;
+
+    //   link pool mgr to pool store
+    int i = 0;
+    while (pool_store[i] != NULL)
+        ++i;
+    pool_store[i] = pool_mgr;
+    pool_store_size = 1;
+
+    // return the address of the mgr, cast to (pool_pt)
+    return (pool_pt) pool_mgr;
 }
 
-alloc_status mem_pool_close(pool_pt pool) {
+alloc_status mem_pool_close(pool_pt pool)
+{
     // get mgr from pool by casting the pointer to (pool_mgr_pt)
-    // check if this pool is allocated
-    // check if pool has only one gap
-    // check if it has zero allocations
-    // free memory pool
-    // free node heap
-    // free gap index
-    // find mgr in pool store and set to null
-    // note: don't decrement pool_store_size, because it only grows
-    // free mgr
+    pool_mgr_pt pool_mgr = (pool_mgr_pt)pool;
 
-    return ALLOC_FAIL;
+    // check if this pool is allocated
+    if (pool_mgr == NULL)
+        return ALLOC_NOT_FREED;
+
+    // check if pool has only one gap
+    if (pool->num_gaps != 1)
+        return ALLOC_NOT_FREED;
+
+    // check if it has zero allocations
+    if (pool->num_allocs != 0)
+        return ALLOC_NOT_FREED;
+
+    // free memory pool
+    free(pool);
+
+    // free node heap
+    free(pool_mgr->node_heap);
+
+    // free gap index
+    free(pool_mgr->gap_ix);
+
+    // find mgr in pool store and set to null
+    int i = 0;
+    while (pool_store[i] != pool_mgr)
+        ++i;
+    pool_store[i] = NULL;
+
+    // free mgr
+    free(pool_mgr);
+
+    return ALLOC_OK;
+
 }
 
 alloc_pt mem_new_alloc(pool_pt pool, size_t size) {
