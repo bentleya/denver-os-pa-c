@@ -229,7 +229,6 @@ static void test_pool_nonempty(void **state) {
     INFO("Closing pool\n");
     status = mem_pool_close(pool);
     assert_int_equal(status, ALLOC_OK);
-
     status = mem_free();
     assert_int_equal(status, ALLOC_OK);
 }
