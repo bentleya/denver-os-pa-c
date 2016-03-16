@@ -126,10 +126,13 @@ alloc_status mem_free()
 
     if(pool_store != NULL)
         mem_pool_close(&pool_store[0]->pool);
+    else
+        return ALLOC_CALLED_AGAIN;
 
     pool_store_size = 0;
     pool_store_capacity = 0;
     free(pool_store);
+    pool_store = NULL;
 
     if (pool_store == NULL)
         return ALLOC_OK;
@@ -255,7 +258,7 @@ alloc_status mem_pool_close(pool_pt pool)
     pool_store[i] = NULL;
 
     // free mgr
-    free(pool_mgr);
+    //free(pool_mgr);
 
     return ALLOC_OK;
 
