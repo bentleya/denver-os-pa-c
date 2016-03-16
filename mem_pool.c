@@ -498,9 +498,8 @@ alloc_status mem_del_alloc(pool_pt pool, alloc_pt alloc)
         return ALLOC_OK;
 }
 
-void mem_inspect_pool(pool_pt pool,
-                      pool_segment_pt *segments,
-                      unsigned *num_segments) {
+void mem_inspect_pool(pool_pt pool, pool_segment_pt *segments, unsigned *num_segments)
+{
     // get the mgr from the pool
     // allocate the segments array with size == used_nodes
     // check successful
@@ -511,6 +510,28 @@ void mem_inspect_pool(pool_pt pool,
                     *segments = segs;
                     *num_segments = pool_mgr->used_nodes;
      */
+
+    // get the mgr from the pool
+    pool_mgr_pt pool_mgr = (pool_mgr_pt) pool;
+
+    // allocate the segments array with size == used_nodes
+    pool_segment_pt segmentArr = (pool_segment_pt) calloc(pool_mgr->used_nodes, sizeof(pool_segment_t));
+    assert(segmentArr);
+    node_pt current = pool_mgr->node_heap;
+
+    // loop through the node heap and the segments array
+    //    for each node, write the size and allocated in the segment
+    for (int i=0; i < pool_mgr->used_nodes; ++i)
+    {
+        segmentArr[i].size = current->alloc_record.size;
+        segmentArr[i].allocated = current->allocated;
+        if (current->next != NULL)
+            current = current->next;
+    }
+
+    // "return" the values:
+    *segments = segmentArr;
+    *num_segments = pool_mgr->used_nodes;
 }
 
 
