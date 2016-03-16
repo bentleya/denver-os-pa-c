@@ -364,7 +364,8 @@ alloc_pt mem_new_alloc(pool_pt pool, size_t size)
     return (alloc_pt)new_node;
 }
 
-alloc_status mem_del_alloc(pool_pt pool, alloc_pt alloc) {
+alloc_status mem_del_alloc(pool_pt pool, alloc_pt alloc)
+{
     // get mgr from pool by casting the pointer to (pool_mgr_pt)
     // get node from alloc by casting the pointer to (node_pt)
     // find the node in the node heap
@@ -413,7 +414,88 @@ alloc_status mem_del_alloc(pool_pt pool, alloc_pt alloc) {
     // add the resulting node to the gap index
     // check success
 
-    return ALLOC_FAIL;
+    // get mgr from pool by casting the pointer to (pool_mgr_pt)
+    pool_mgr_pt pool_mgr = (pool_mgr_pt) pool;
+
+    // get node from alloc by casting the pointer to (node_pt)
+    node_pt node = (node_pt) alloc;
+    node_pt deletion = NULL;
+
+    // find the node in the node heap
+    for (int i=0; i < pool_mgr->total_nodes; ++i)
+    {
+        if(node == &pool_mgr->node_heap[i])
+        {
+            deletion = &pool_mgr->node_heap[i];
+            break;
+        }
+    }
+
+    // this is node-to-delete
+    // make sure it's found
+    if (deletion == NULL)
+        return ALLOC_FAIL;
+
+    // update metadata (num_allocs, alloc_size)
+    deletion->allocated = 0;
+    --pool_mgr->pool.num_allocs;
+    pool_mgr->pool.alloc_size = pool_mgr->pool.alloc_size - deletion->alloc_record.size;
+
+    // if the next node in the list is also a gap, merge into node-to-delete
+    if (deletion->next != NULL && deletion->next->allocated == 0)
+    {
+        node_pt next = deletion->next;
+        if (_mem_remove_from_gap_ix(pool_mgr, 0, next) == ALLOC_FAIL)
+            return ALLOC_FAIL;
+
+        deletion->alloc_record.size += next->alloc_record.size;
+        next->used = 0;
+        --pool_mgr->used_nodes;
+
+        if (next->next)
+        {
+            next->next->prev = deletion;
+            deletion->next = next->next;
+        }
+
+        else
+            deletion->next = NULL;
+
+        next->next = NULL;
+        next->prev = NULL;
+    }
+
+    // this merged node-to-delete might need to be added to the gap index
+    // but one more thing to check...
+    // if the previous node in the list is also a gap, merge into previous!
+    if(deletion->prev != NULL && deletion->prev->allocated == 0)
+    {
+        node_pt previous = deletion->prev;
+        if (_mem_remove_from_gap_ix(pool_mgr, 0, previous) == ALLOC_FAIL)
+            return ALLOC_FAIL;
+
+        previous->alloc_record.size = previous->alloc_record.size - deletion->alloc_record.size;
+
+        deletion->used = 0;
+        --pool_mgr->used_nodes;
+        if (deletion->next)
+        {
+            previous->next = deletion->next;
+            deletion->next->next->prev = previous;
+        }
+        else
+            previous->next = NULL;
+
+        deletion->next = NULL;
+        deletion->prev = NULL;
+    }
+
+    // add the resulting node to the gap index
+    // check success
+    if (_mem_add_to_gap_ix(pool_mgr, deletion->alloc_record.size, deletion) != ALLOC_OK)
+        return ALLOC_FAIL;
+    else
+        return ALLOC_OK;
 }
 
 void mem_inspect_pool(pool_pt pool,
