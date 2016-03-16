@@ -279,7 +279,7 @@ alloc_pt mem_new_alloc(pool_pt pool, size_t size)
             return NULL;
 
     // check used nodes fewer than total nodes, quit on error
-    if (pool_mgr->total_nodes > pool_mgr->used_nodes)
+    if (pool_mgr->total_nodes < pool_mgr->used_nodes)
         return NULL;
 
     // get a node for allocation:
@@ -603,7 +603,7 @@ static alloc_status _mem_add_to_gap_ix(pool_mgr_pt pool_mgr, size_t size, node_p
     pool_mgr->gap_ix[i].size = size;
 
     // update metadata (num_gaps)
-    ++pool_mgr->pool.num_gaps;
+    //++pool_mgr->pool.num_gaps;
 
     // sort the gap index (call the function)
     // check success
