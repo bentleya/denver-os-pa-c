@@ -248,27 +248,49 @@ void mem_inspect_pool(pool_pt pool,
 /* Definitions of static functions */
 /*                                 */
 /***********************************/
-static alloc_status _mem_resize_pool_store() {
-    // check if necessary
-    /*
-                if (((float) pool_store_size / pool_store_capacity)
-                    > MEM_POOL_STORE_FILL_FACTOR) {...}
-     */
-    // don't forget to update capacity variables
+static alloc_status _mem_resize_pool_store()
+{
+    if (((float) pool_store_size / pool_store_capacity) > MEM_POOL_STORE_FILL_FACTOR) {
+        pool_store = realloc(pool_store, sizeof(pool_store) * MEM_POOL_STORE_EXPAND_FACTOR);
+        pool_store_capacity = pool_store_capacity * MEM_POOL_STORE_EXPAND_FACTOR;
 
-    return ALLOC_FAIL;
+        return ALLOC_OK;
+    }
+    else {
+        return ALLOC_FAIL;
+    }
 }
 
-static alloc_status _mem_resize_node_heap(pool_mgr_pt pool_mgr) {
-    // see above
+static alloc_status _mem_resize_node_heap(pool_mgr_pt pool_mgr)
+{
+    if (pool_mgr->used_nodes / pool_mgr->total_nodes > MEM_NODE_HEAP_FILL_FACTOR)
+    {
+        pool_mgr->node_heap = realloc(pool_mgr->node_heap, sizeof(pool_mgr->node_heap) * MEM_NODE_HEAP_EXPAND_FACTOR);
+        pool_mgr->total_nodes = pool_mgr->total_nodes * MEM_NODE_HEAP_EXPAND_FACTOR;
 
-    return ALLOC_FAIL;
+        return ALLOC_OK;
+    }
+
+    else
+    {
+        return ALLOC_FAIL;
+    }
 }
 
-static alloc_status _mem_resize_gap_ix(pool_mgr_pt pool_mgr) {
-    // see above
+static alloc_status _mem_resize_gap_ix(pool_mgr_pt pool_mgr)
+{
+    if (pool_mgr->gap_ix->size / pool_mgr->gap_ix_capacity > MEM_GAP_IX_FILL_FACTOR)
+    {
+        pool_mgr->gap_ix = realloc(pool_mgr->gap_ix, sizeof(pool_mgr->gap_ix) * MEM_GAP_IX_EXPAND_FACTOR);
+        pool_mgr->gap_ix_capacity = pool_mgr->gap_ix_capacity * MEM_GAP_IX_EXPAND_FACTOR;
 
-    return ALLOC_FAIL;
+        return ALLOC_OK;
+    }
+
+    else
+    {
+        return ALLOC_FAIL;
+    }
 }
 
 static alloc_status _mem_add_to_gap_ix(pool_mgr_pt pool_mgr, size_t size, node_pt node)
@@ -329,5 +351,4 @@ static alloc_status _mem_sort_gap_ix(pool_mgr_pt pool_mgr)
 
     return ALLOC_OK;
 }
-
 
