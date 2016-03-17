@@ -345,11 +345,9 @@ alloc_pt mem_new_alloc(pool_pt pool, size_t size)
         node_pt new_gap = &pool_mgr->node_heap[i];
 
         //initialize it to a gap node
-//        if (new_gap == NULL) {
-            new_gap->used = 1;
-            new_gap->allocated = 0;
-            new_gap->alloc_record.size = remainder;
-  //      }
+        new_gap->used = 1;
+        new_gap->allocated = 0;
+        new_gap->alloc_record.size = remainder;
 
         //update metadata (used_nodes)
         ++pool_mgr->used_nodes;
