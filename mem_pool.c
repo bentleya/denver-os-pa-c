@@ -290,7 +290,8 @@ alloc_pt mem_new_alloc(pool_pt pool, size_t size)
     if(pool_mgr->pool.policy == FIRST_FIT)
     {
         node_pt heap = pool_mgr->node_heap;
-        while(pool_mgr->node_heap[i].allocated != 0 && pool_mgr->node_heap[i].used !=0)
+
+        while((pool_mgr->node_heap[i].allocated != 0 && pool_mgr->node_heap[i].used !=0) || pool_mgr->node_heap[i].alloc_record.size < size)
             ++i;
 
         if(heap == NULL)
