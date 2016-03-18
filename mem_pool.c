@@ -580,25 +580,17 @@ static alloc_status _mem_sort_gap_ix(pool_mgr_pt pool_mgr)
 {
     int i = pool_mgr->pool.num_gaps - 1;
 
-    while (pool_mgr->gap_ix[i].size < pool_mgr->gap_ix[i+1].size && i > 0)
+    //while (pool_mgr->gap_ix[i].size < pool_mgr->gap_ix[i+1].size && i > 0)
+    for (i; i >=0; --i)
     {
-        gap_t temp = pool_mgr->gap_ix[i];
-        pool_mgr->gap_ix[i] = pool_mgr->gap_ix[i+1];
-        pool_mgr->gap_ix[i+1] = temp;
-
-        --i;
-    }
-
-    /*for (i; i > 0; --i)
-    {
-        if (pool_mgr->gap_ix[i].size < pool_mgr->gap_ix[i-1].size ||
-            (pool_mgr->gap_ix[i].size == pool_mgr->gap_ix[i-1].size && pool_mgr->gap_ix[i].node->alloc_record.mem < pool_mgr->gap_ix[i].node->alloc_record.mem))
+        if (pool_mgr->gap_ix[i].size < pool_mgr->gap_ix[i+1].size)
         {
             gap_t temp = pool_mgr->gap_ix[i];
-            pool_mgr->gap_ix[i] = pool_mgr->gap_ix[i-1];
-            pool_mgr->gap_ix[i-1] = temp;
+            pool_mgr->gap_ix[i] = pool_mgr->gap_ix[i + 1];
+            pool_mgr->gap_ix[i + 1] = temp;
         }
-    }*/
+        //--i;
+    }
 
     return ALLOC_OK;
 }
