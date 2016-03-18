@@ -292,7 +292,11 @@ alloc_pt mem_new_alloc(pool_pt pool, size_t size)
         node_pt heap = pool_mgr->node_heap;
 
         while((pool_mgr->node_heap[i].allocated != 0 && pool_mgr->node_heap[i].used !=0) || pool_mgr->node_heap[i].alloc_record.size < size)
+        {
+            if(&pool_mgr->node_heap[i] == pool_mgr->gap_ix[0].node && pool_mgr->node_heap[i].alloc_record.size < size)
+                return NULL;
             ++i;
+        }
 
         if(heap == NULL)
             return NULL;
