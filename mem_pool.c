@@ -355,6 +355,8 @@ alloc_pt mem_new_alloc(pool_pt pool, size_t size)
 
         //update linked list (new node right after the node for allocation)
         new_node->alloc_record.size = size;
+        if(new_node->next)
+            new_node->next->prev = new_gap;
         new_gap->next = new_node->next;
         new_node->next = new_gap;
         new_gap->prev = new_node;
